@@ -43,7 +43,7 @@ jobs:
         with:
           args: >
             -Dsonar.projectKey=Ubendra143_Sonar
-            -Dsonar.organization=Ubendra143
+            -Dsonar.organization=ubendra143
             -Dsonar.sources=src
             -Dsonar.python.coverage.reportPaths=coverage.xml
         env:
