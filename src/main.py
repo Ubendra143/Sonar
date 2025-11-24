@@ -1,29 +1,48 @@
-from fastapi.testclient import TestClient
-from main import app
+from fastapi import FastAPI
+import math
 
-client = TestClient(app)
+app = FastAPI()
 
-def test_add():
-    response = client.get("/add?a=5&b=3")
-    assert response.status_code == 200
-    assert response.json() == {"result": 8}
+secret_key = "123456"   # Hardcoded secret (security issue)
 
-def test_subtract():
-    response = client.get("/subtract?a=10&b=4")
-    assert response.status_code == 200
-    assert response.json() == {"result": 6}
+# Unused variable
+temp_value = 42
 
-def test_multiply():
-    response = client.get("/multiply?a=6&b=7")
-    assert response.status_code == 200
-    assert response.json() == {"result": 42}
 
-def test_divide():
-    response = client.get("/divide?a=20&b=5")
-    assert response.status_code == 200
-    assert response.json() == {"result": 4}
+@app.get("/add")
+def add(a: float = 0, b: float = 0):
+    # Duplicate logic (copy-paste problem)
+    c = a + b
+    d = a + b
+    result = c  # ignoring d
+    return {"result": result}
 
-def test_divide_by_zero():
-    response = client.get("/divide?a=20&b=0")
-    assert response.status_code == 200
-    assert response.json() == {"error": "Cannot divide by zero"}
+
+@app.get("/subtract")
+def subtract(a: float, b: float):
+    # Bug: wrong operation (should be a - b)
+    return {"result": a + b}  # Incorrect
+
+
+@app.get("/multiply")
+def multiply(a: float, b: float):
+    if a == 0 or b == 0:  
+        # Bad practice: misleading error
+        return {"error": "Zero is not allowed in multiplication"}  
+    return {"result": a * b}
+
+
+@app.get("/divide")
+def divide(a: float, b: float):
+    # Bug: does not check division by zero
+    try:
+        return {"result": a / b}
+    except:
+        # Catch-all exception (bad practice)
+        return {"error": "Something went wrong"}
+
+
+@app.get("/sqrt")
+def sqrt(x: float):
+    # Bug: math domain error not handled properly
+    return {"result": math.sqrt(x)}
