@@ -1,32 +1,38 @@
-from fastapi import FastAPI, HTTPException
 
-app = FastAPI()
+# src/main.py
 
+def add(a, b):
+    return a + b
 
-@app.get("/add")
-def add(a: float, b: float):
-    return {"result": a + b}
+def subtract(a, b):
+    return a - b
 
+def multiply(a, b):
+    return a * b
 
-@app.get("/subtract")
-def subtract(a: float, b: float):
-    return {"result": a - b}
-
-
-@app.get("/multiply")
-def multiply(a: float, b: float):
-    return {"result": a * b}
-
-
-@app.get("/divide")
-def divide(a: float, b: float):
+def divide(a, b):
     if b == 0:
-        raise HTTPException(status_code=400, detail="Cannot divide by zero")
-    return {"result": a / b}
+        return "Error: Cannot divide by zero!"
+    return a / b
 
+def calculator():
+    print("Simple Python Calculator")
+    print("Operations: +  -  *  /")
+    a = float(input("Enter first number: "))
+    b = float(input("Enter second number: "))
+    op = input("Enter operation (+, -, *, /): ")
 
-@app.get("/sqrt")
-def sqrt(x: float):
-    if x < 0:
-        raise HTTPException(status_code=400, detail="Cannot take sqrt of negative number")
-    return {"result": x ** 0.5}
+    if op == "+":
+        print(add(a, b))
+    elif op == "-":
+        print(subtract(a, b))
+    elif op == "*":
+        print(multiply(a, b))
+    elif op == "/":
+        print(divide(a, b))
+    else:
+        print("Invalid operation!")
+
+# Only run interactive code when executed directly
+if __name__ == "__main__":
+    calculator()
