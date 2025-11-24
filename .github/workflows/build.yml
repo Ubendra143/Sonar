@@ -22,7 +22,7 @@ jobs:
       - name: Run Unit Tests with Coverage
         run: |
           pip install pytest flask pytest-cov
-          python -m pytest src/main.py --cov=. --cov-report xml:coverage.xml
+          python -m pytest src/test_secure_example.py --cov=. --cov-report xml:coverage.xml
 
       # Step 3: SonarQube Scan
       - name: SonarQube Scan
