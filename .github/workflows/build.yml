@@ -8,19 +8,19 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  test-build-scan:
+  test-and-sonarqube:
     runs-on: ubuntu-latest
 
     steps:
-      # 1️⃣ Checkout repository
+      # 1. Checkout repository
       - uses: actions/checkout@v4
 
-      # 2️⃣ Setup Python
+      # 2. Set up Python
       - uses: actions/setup-python@v4
         with:
           python-version: 3.11
 
-      # 3️⃣ Cache pip dependencies
+      # 3. Cache pip dependencies
       - name: Cache pip
         uses: actions/cache@v3
         with:
@@ -29,35 +29,34 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-pip-
 
-      # 4️⃣ Install dependencies
+      # 4. Install Python dependencies
       - run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-cov httpx
 
-      # 5️⃣ Set PYTHONPATH
+      # 5. Set PYTHONPATH
       - run: echo "PYTHONPATH=$(pwd)/src:$PYTHONPATH" >> $GITHUB_ENV
 
-      # 6️⃣ Run tests with coverage
+      # 6. Run pytest with coverage
       - run: pytest --cov=src --cov-branch --cov-report=xml
 
-      # 7️⃣ Login to Docker Hub
+      # 7. Login to Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      # 8️⃣ Build Docker image
+      # 8. Build Docker image
       - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-calculator:latest .
+        run: docker build -t fastapi-calculator .
 
-      # 9️⃣ Run FastAPI app in Docker
-      - name: Run FastAPI app in Docker
+      # 9. Run FastAPI app in Docker
+      - name: Run FastAPI app
         run: |
           docker network inspect zapnet >/dev/null 2>&1 || docker network create zapnet
-          docker run -d -p 8000:8000 --network zapnet --name fastapi-app ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-calculator:latest
-
+          docker run -d -p 8000:8000 --network zapnet --name fastapi-app fastapi-calculator
+          
           echo "Waiting for FastAPI app to start..."
           for i in {1..20}; do
             if curl -s http://localhost:8000/health >/dev/null 2>&1; then
@@ -67,8 +66,8 @@ jobs:
             sleep 1
           done
 
-      # 🔟 Run OWASP ZAP baseline scan
-      - name: OWASP ZAP Scan
+      # 10. Run OWASP ZAP baseline scan safely
+      - name: Run ZAP baseline scan
         run: |
           mkdir -p zap-output
           docker run --rm --network zapnet \
@@ -82,19 +81,19 @@ jobs:
             -r zap-report.html \
             -J zap-report.json \
             -w zap-warnings.md \
-            --exitcode 0  # always pass workflow
+            --exitcode 0  # Ensures scan doesn't fail the workflow
 
-      # 1️⃣1️⃣ Upload ZAP reports
+      # 11. Upload ZAP report
       - uses: actions/upload-artifact@v4
         with:
           name: zap-report
           path: zap-output/*
 
-      # 1️⃣2️⃣ Push Docker image to Docker Hub
+      # 12. Push Docker image to Docker Hub
       - name: Push Docker image
-        run: docker push ${{ secrets.DOCKERHUB_USERNAME }}/fastapi-calculator:latest
+        run: docker push fastapi-calculator
 
-      # 1️⃣3️⃣ SonarQube scan
+      # 13. SonarQube scan
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
